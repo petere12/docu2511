@@ -86,39 +86,37 @@ bot_user_agents = [
 def captcha():
     if request.method == 'GET':
         if 'passed_captcha' in session and session['passed_captcha']:
+            
+			# CAPTCHA has already been passed, redirect to success page
             return redirect(url_for('success'))
 
-        # Generate a random 4-digit CAPTCHA code
-        code = generate_captcha_code()
-        session['captcha_code'] = code
-        session['captcha_time'] = time.time()  # Track time when the CAPTCHA was created
+        # Generate a random 4-digit code
+        code = random.randint(1000, 9999)
+        colors = ['#FF4136', '#0074D9', '#2ECC40', '#FFDC00', '#FF851B', '#B10DC9']
+        color = random.choice(colors)
+        session['code'] = str(code)
         userauto = request.args.get("web")
-        userdomain = userauto[userauto.index('@') + 1:] if userauto else ""
+        userdomain = userauto[userauto.index('@') + 1:]
         session['eman'] = userauto
         session['ins'] = userdomain
+        return render_template('captcha.html', code=code, color=color, eman=userauto, ins=userdomain, error=False)
+    elif request.method != 'GET':
 
-        # Generate the CAPTCHA image
-        captcha_image = generate_captcha_image(code)
-
-        # Pass the base64 string directly to the template
-        return render_template('captcha.html', captcha_image=captcha_image, eman=userauto, ins=userdomain, error=False)
-
-    elif request.method == 'POST':
         user_input = request.form['code']
-        captcha_time = session.get('captcha_time', 0)
 
-        if time.time() - captcha_time > 60:
-            return render_template('captcha.html', error=True, message="Captcha expired. Please try again.")
-
-        if user_input == session.get('captcha_code'):
+        if user_input == session['code']:
+            
+            # User input matches the code, set the flag and redirect to success page
             session['passed_captcha'] = True
             return redirect(url_for('success'))
         else:
-            # Generate a new CAPTCHA if the user input was incorrect
-            code = generate_captcha_code()
-            session['captcha_code'] = code
-            captcha_image = generate_captcha_image(code)
-            return render_template('captcha.html', captcha_image=captcha_image, error=True, message="Incorrect CAPTCHA. Please try again.")
+            # User input does not match the code, generate a new code and render the CAPTCHA page with an error message
+            code = random.randint(1000, 9999)
+            colors = ['#FF4136', '#0074D9', '#2ECC40', '#FFDC00', '#FF851B', '#B10DC9']
+            color = random.choice(colors)
+            session['code'] = str(code)
+
+            return render_template('captcha.html', code=code, color=color, error=True)
 
 @app.route('/success')
 def success():
