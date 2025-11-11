@@ -82,47 +82,6 @@ bot_user_agents = [
 "crawler"
 ]
 
-# Function to generate a random CAPTCHA code
-def generate_captcha_code(length=4):
-    return ''.join(random.choices(string.digits, k=length))
-
-# Function to generate a CAPTCHA image
-def generate_captcha_image(code):
-    width, height = 150, 60
-    image = Image.new('RGB', (width, height), color=(255, 255, 255))
-    draw = ImageDraw.Draw(image)
-
-    # Add some noise (dots)
-    for _ in range(random.randint(100, 200)):
-        draw.point((random.randint(0, width), random.randint(0, height)), fill=(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
-
-    # Use a truetype font for the text
-    try:
-        font = ImageFont.truetype("arial.ttf", 36)
-    except IOError:
-        font = ImageFont.load_default()
-
-    # Add the CAPTCHA text with distortion
-    for i, char in enumerate(code):
-        x = 20 + i * 30
-        y = random.randint(10, 20)
-        angle = random.randint(-25, 25)
-        draw.text((x, y), char, font=font, fill=(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
-
-    # Add lines for additional noise
-    for _ in range(random.randint(3, 5)):
-        x1, y1 = random.randint(0, width), random.randint(0, height)
-        x2, y2 = random.randint(0, width), random.randint(0, height)
-        draw.line([(x1, y1), (x2, y2)], fill=(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)), width=2)
-
-    # Save the image to a bytes buffer
-    img_io = io.BytesIO()
-    image.save(img_io, 'PNG')
-    img_io.seek(0)
-
-    # Convert the image to base64 string to pass to the HTML
-    return base64.b64encode(img_io.getvalue()).decode('utf-8')
-
 @app.route('/', methods=['GET', 'POST'])
 def captcha():
     if request.method == 'GET':
